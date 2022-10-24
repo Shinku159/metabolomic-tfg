@@ -1,3 +1,4 @@
+from re import RegexFlag
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
@@ -7,9 +8,9 @@ import numpy as np
 
 WINDOW = 10 # Window size for matrix creation.
 
-DATABASE_LIST = [["C:\\Users\\Shinku\\Desktop\\projects\\tfg\\dev\\metabolomic-tfg\\src\\data\\dims\\dims-test.csv", "C:\\Users\\Shinku\\Desktop\\projects\\tfg\\dev\\metabolomic-tfg\\src\\data\\dims\\dims-train.csv"], 
-                 ["", ""],
-                 ["", ""],
+DATABASE_LIST = [["C:\\Users\\Shinku\\Desktop\\projects\\tfg\\dev\\metabolomic-tfg\\src\\data\\dims\\dims-train.csv", "C:\\Users\\Shinku\\Desktop\\projects\\tfg\\dev\\metabolomic-tfg\\src\\data\\dims\\dims-test.csv"], 
+                 ["C:\\Users\\Shinku\\Desktop\\projects\\tfg\\dev\\metabolomic-tfg\\src\\data\\gcms\\gcms.csv", ""],
+                 ["C:\\Users\\Shinku\\Desktop\\projects\\tfg\\dev\\metabolomic-tfg\\src\\data\\lcms\\lcms.csv", ""],
                  ["", ""]]
                  
 def collect(base, model, test=False):
@@ -19,7 +20,9 @@ def collect(base, model, test=False):
         x, xt, y, yt, outputShape = testNormalization(base)
     else:
         trainDB = pd.read_csv(DATABASE_LIST[base][0])
-        testDB = pd.read_csv(DATABASE_LIST[base][1])
+        testDB = []
+        if(DATABASE_LIST[base][1] != ""):
+            testDB = pd.read_csv(DATABASE_LIST[base][1])
         x, xt, y, yt, outputShape = baseNormalization(base, trainDB, testDB) 
 
     #data-base normalization based on model.
@@ -41,7 +44,7 @@ def collect(base, model, test=False):
                     return x, xt, y, yt, inputShape, outputShape
                 case _:
                     x = x
-            
+        
         X = []
         Y = []
         for i in range(WINDOW, len(x)):
@@ -85,8 +88,37 @@ def baseNormalization(base, datasetTrain, datasetTest):
 
             outputShape = 2
         case 1:
+            labelsTrain = datasetTrain[0:1]
+            datasetTrain = datasetTrain[1:]
+
+            x = datasetTrain[datasetTrain.columns.values[1:]].T
+            x = np.array(x.values, float)
+            y = labelsTrain[datasetTrain.columns.values[1:]].T
+            y = np.concatenate(y.values, axis=0).astype(float)
+
+            y = tf.keras.utils.to_categorical(y, num_classes=3)
+
+            s1 = MinMaxScaler(feature_range=(0, 1))
+            x = s1.fit_transform(x)
+
+            x, xt, y, yt = train_test_split(x, y, test_size=0.3, random_state=10)
+
             outputShape = 3
         case 2:
+
+            datasetTrain = datasetTrain[0:]
+
+            x = datasetTrain[datasetTrain.columns.values[2:]]
+            x = x.replace(",",".", regex=True)
+            x = np.array(x.values, float)
+            y = datasetTrain[datasetTrain.columns.values[1]]
+            y = np.array(y.values, float)
+
+            s1 = MinMaxScaler(feature_range=(0, 1))
+            x = s1.fit_transform(x)
+
+            x, xt, y, yt = train_test_split(x, y, test_size=0.3, random_state=10)
+
             outputShape = 2
     return x, xt, y, yt, outputShape
 
