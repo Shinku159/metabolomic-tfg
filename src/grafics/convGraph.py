@@ -1,48 +1,76 @@
 
-import pandas as pd
-import sklearn
+from keras import backend as K
 import tensorflow as tf
-from tensorflow.keras.callbacks import TensorBoard
-import Utils
-from pathlib import Path  
+import multiprocessing
+import dataCollector
 
-#CONTROL PANEL: ====================
-units = [64, 128, 256, 512, 1024, 2048, 4096]
-units_dense = [64, 128, 256, 512, 1024]
-optimizer = [tf.keras.optimizers.Adam, tf.keras.optimizers.RMSprop, tf.keras.optimizers.Nadam, tf.keras.optimizers.Adadelta, tf.keras.optimizers.SGD]
-optimizer_name = ["adam", "rmsprop", "nadam", "adadelta", "SGD"]
-learning_rate = [1e-2, 1e-3, 1e-4, 1e-5]
+#MEMORY CONTROL ===================
+gpus = tf.config.list_physical_devices(device_type = 'GPU')
+tf.config.experimental.set_memory_growth(gpus[0], True)
+
+#<F1-SCORE> =======================
+def custom_f1(y_true, y_pred):    
+    def recall_m(y_true, y_pred):
+        TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        Positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        
+        recall = TP / (Positives+K.epsilon())    
+        return recall 
+    
+    
+    def precision_m(y_true, y_pred):
+        TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+        Pred_Positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    
+        precision = TP / (Pred_Positives+K.epsilon())
+        return precision 
+    
+    precision, recall = precision_m(y_true, y_pred), recall_m(y_true, y_pred)
+    
+    return 2*((precision*recall)/(precision+recall+K.epsilon()))
 # ===================================
 
-loss =  "sparse_categorical_crossentropy"
-metrics = ['accuracy']
-
-x, xt, y, yt, inputShape, outputShape = Utils.DBCollector(1, 1, test=True)
-
-NAME = ""
-
-Model = None
-for i in range(len(units)):
-    for y in range (len(units_dense)):
-        Model = tf.keras.Sequential()
-        Model.add(tf.keras.layers.Conv1D(filters=units[i], kernel_size=(3), input_shape=inputShape, activation=tf.nn.relu))
+def KerasTrain(x, y, inputShape, outputShape, unidades, unidadesDensas, camadas, camadasDensas, otimizador, optimizer_name):
+    tf.keras.backend.clear_session()
+    Model = tf.keras.Sequential()
+    Model.add(tf.keras.layers.Conv1D(filters=unidades, kernel_size=(3), input_shape=inputShape, activation=tf.nn.relu))
+    Model.add(tf.keras.layers.Dropout(0.2))
+    for contador in range(camadas):
+        Model.add(tf.keras.layers.Conv1D(filters=unidades, kernel_size=(3), activation=tf.nn.relu, padding='same'))
         Model.add(tf.keras.layers.Dropout(0.2))
-        for j in range(1, 9):
-            for k in range(9):
-                for p in range(j):
-                    Model.add(tf.keras.layers.Conv1D(filters=units[i], kernel_size=(3), activation=tf.nn.relu))
-                    Model.add(tf.keras.layers.Dropout(0.2))
-                Model.add(tf.keras.layers.MaxPooling1D(pool_size=(2)))
-                Model.add(tf.keras.layers.Flatten())
-                Model.add(tf.keras.layers.Dropout(0.2))
-                for l in range(k):
-                    Model.add(tf.keras.layers.Dense(units=units_dense[y], activation=tf.nn.relu))
-                    Model.add(tf.keras.layers.Dropout(0.2))
-                Model.add(tf.keras.layers.Dense(units=outputShape, activation=tf.nn.softmax))
-                for o in range(len(optimizer)):
-                    for w in range(len(learning_rate)):
-                        opt = optimizer[o](learning_rate=learning_rate[w])
-                        NAME =  "mnist-conv-{0}-{1}-{2}-{3}-{4}-{5}".format(optimizer_name[o], learning_rate[w], j, k, units[i], units_dense[y])
-                        Model.compile(opt, loss, metrics)
-                        tensorboard = TensorBoard(log_dir = "logs/conv/{0}".format(NAME))
-                        Model.fit(x, y, validation_split=0.3, epochs=10, batch_size=min(200, x.size), shuffle=True, callbacks=[tensorboard])
+    Model.add(tf.keras.layers.MaxPooling1D(pool_size=(2)))
+    Model.add(tf.keras.layers.Flatten())
+    Model.add(tf.keras.layers.Dropout(0.2))
+    for auxiliar in range(camadasDensas):
+        Model.add(tf.keras.layers.Dense(units=unidadesDensas, activation=tf.nn.relu))
+        Model.add(tf.keras.layers.Dropout(0.2))
+    Model.add(tf.keras.layers.Dense(units=outputShape, activation=tf.nn.sigmoid))
+    opt = otimizador(learning_rate=1e-5)
+    NAME =  "dims-conv-{0}-{1}-{2}-{3}-{4}-{5}".format(optimizer_name, 1e-5, camadas+1, camadasDensas, unidades, unidadesDensas)
+    Model.compile(opt, "binary_crossentropy", ['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), custom_f1])
+    tensorboard = tf.keras.callbacks.TensorBoard(log_dir = "logs/dims/conv/{0}".format(NAME))
+    Model.fit(x, y, validation_split=0.3, epochs=200, batch_size=min(200, x.size), shuffle=True, callbacks=[tensorboard])
+
+
+if __name__ == "__main__":
+#CONTROL PANEL: ====================
+    units = [128, 256, 512, 1024]
+    units_dense = [128, 256]
+    optimizer = [tf.keras.optimizers.Adam, tf.keras.optimizers.RMSprop, tf.keras.optimizers.SGD]
+    optimizer_name = ["adam", "rmsprop", "SGD"]
+    # ===================================
+
+    x, xt, y, yt, inputShape, outputShape = dataCollector.collect(0, 1) #Base dims for conv model.
+
+    NAME = ""
+    Model = None
+
+    for i in range(len(units)):
+        for j in range (len(units_dense)):
+            for camadas in range(1, 10):
+                for camadasDensas in range(0, 3, 2):
+                    for otimizador in range(len(optimizer)):
+                        p = multiprocessing.Process(target=KerasTrain, args=(x, y, inputShape, 1, units[i], units_dense[j], camadas, camadasDensas, optimizer[otimizador], optimizer_name[otimizador]))
+                        p.start()
+                        p.join()
+                            

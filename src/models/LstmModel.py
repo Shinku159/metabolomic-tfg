@@ -53,8 +53,11 @@ class LstmModel(tf.keras.Model):
     self.drop4 = tf.keras.layers.Dropout(0.2)
     self.dense2 = tf.keras.layers.Dense(units=32, activation=tf.nn.relu)
     self.drop5 = tf.keras.layers.Dropout(0.2)
-    self.outputs = tf.keras.layers.Dense(units=outputShape, activation=tf.nn.softmax)
-    self.buildCompile(**kwargs)
+    if(outputShape == 2):
+      self.outputs = tf.keras.layers.Dense(units=1, activation=tf.nn.sigmoid)
+    else:
+      self.outputs = tf.keras.layers.Dense(units=outputShape, activation=tf.nn.softmax)
+    self.buildCompile(outputShape, **kwargs)
     
   def call(self, inputs):
     x = self.inputs(inputs)
@@ -71,9 +74,11 @@ class LstmModel(tf.keras.Model):
     x = self.drop5(x)
     return self.outputs(x)
 
-  def buildCompile(self, **kwargs):
+  def buildCompile(self, outputShape, **kwargs):
     optimizer = kwargs.get('optimizer', tf.keras.optimizers.Adam(learning_rate=1e-3, epsilon=1e-8))
-    loss =  kwargs.get('loss', "sparse_categorical_crossentropy")
+    loss =  kwargs.get('loss',  "categorical_crossentropy")  
+    if(outputShape == 2):
+      loss = "binary_crossentropy"
     metrics = kwargs.get('metrics', ['accuracy'])
     
     self.compile(optimizer, loss, metrics)
