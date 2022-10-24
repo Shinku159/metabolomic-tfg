@@ -68,8 +68,22 @@ print("accuracy: {0}".format(ac))
 
 
 
+# x, xt, y, yt, inputShape, outputShape = dc.collect(0, 1) #collect dims database for conv model 
 
+# print(x[0], y[0])
 
+# model = LstmModel(inputShape, outputShape, metrics = ['accuracy'])
+# model.fit(x, y, validation_split=0.3, epochs=200, batch_size=min(200, x.size), shuffle=True)
+
+# yp = model.predict(xt)
+# # yp = tf.one_hot(tf.argmax(yp, axis=1), depth = outputShape)
+
+# # ac = accuracy_score(yt, yp)
+# ac = accuracy_score(yt, yp.round())
+
+# # print(classification_report(yt, yp))
+# print(classification_report(yt, yp.round()))
+# print("accuracy: {0}".format(ac))      
 
 
 
@@ -199,3 +213,76 @@ print("accuracy: {0}".format(ac))
 # yp = mlpModel.predict(xt)
 
 # print(sklearn.metrics.classification_report(yt, yp.round()))
+
+
+
+import tensorflow as tf
+# from keras import backend as K
+# import dataCollector
+# from sklearn.datasets import load_iris
+# from sklearn.model_selection import train_test_split
+
+# from models.MlpModel import MlpModel
+# from sklearn.metrics import accuracy_score, classification_report
+
+# def custom_f1(y_true, y_pred):    
+#     def recall_m(y_true, y_pred):
+#         TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+#         Positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+        
+#         recall = TP / (Positives+K.epsilon())    
+#         return recall 
+    
+    
+#     def precision_m(y_true, y_pred):
+#         TP = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+#         Pred_Positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    
+#         precision = TP / (Pred_Positives+K.epsilon())
+#         return precision 
+    
+#     precision, recall = precision_m(y_true, y_pred), recall_m(y_true, y_pred)
+    
+#     return 2*((precision*recall)/(precision+recall+K.epsilon()))
+
+# x, xt, y, yt, inputShape, outputShape = dataCollector.collect(2, 1) #Base dims for conv model.
+
+# Model = tf.keras.Sequential()
+# Model.add(tf.keras.layers.Conv1D(filters=256, kernel_size=(3), input_shape=inputShape, activation=tf.nn.relu))
+# Model.add(tf.keras.layers.Dropout(0.2))
+# for p in range(2):
+#     Model.add(tf.keras.layers.Conv1D(filters=256, kernel_size=(3), activation=tf.nn.relu))
+#     Model.add(tf.keras.layers.Dropout(0.2))
+# Model.add(tf.keras.layers.MaxPooling1D(pool_size=(2)))
+# Model.add(tf.keras.layers.Flatten())
+# Model.add(tf.keras.layers.Dropout(0.2))
+# for l in range(5):
+#     Model.add(tf.keras.layers.Dense(units=64, activation=tf.nn.relu))
+#     Model.add(tf.keras.layers.Dropout(0.2))
+# Model.add(tf.keras.layers.Dense(units=1, activation=tf.nn.sigmoid))
+
+# opt = tf.keras.optimizers.Adam(learning_rate=1e-3)
+# loss =  "binary_crossentropy"
+# metrics = ['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), custom_f1]
+# Model.compile(opt, loss, metrics)
+# Model.fit(x, y, validation_split=0.3, epochs=200, batch_size=min(200, x.size), shuffle=True)
+
+# # from sklearn.linear_model import SGDClassifier
+# # clf = SGDClassifier(loss="log_loss", max_iter=200)
+# # clf.fit(x, y)
+# # yp = clf.predict(x)
+
+
+# # model = MlpModel(inputShape, outputShape, metrics = ['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), custom_f1])
+# # model.fit(x, y, validation_split=0.3, epochs=1, batch_size=min(200, x.size), shuffle=True)
+
+# yp = Model.predict(x)
+# # yp = tf.one_hot(tf.argmax(yp, axis=1), depth = 26)
+
+# ac = accuracy_score(y, yp.round())
+# # ac = accuracy_score(y, yp)
+# # f1 = custom_f1(yt, yp)
+
+# print(classification_report(y, yp.round()))
+# print("accuracy: {0}".format(ac))        
+# # print("f1: {0}".format(f1))        
