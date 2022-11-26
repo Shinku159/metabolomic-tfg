@@ -1,34 +1,38 @@
 
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from tensorflow import keras
-from models.MlpModel import MlpModel
-from models.LstmModel import LstmModel
-from models.ConvModel import ConvModel
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, r2_score
-import sklearn
-import tensorflow as tf
-import tensorflow_datasets as tfds
-import numpy as np
-import Utils
+# from sklearn.preprocessing import MinMaxScaler, StandardScaler
+# from tensorflow import keras
+# from models.MlpModel import MlpModel
+# from models.LstmModel import LstmModel
+# from models.ConvModel import ConvModel
+# import pandas as pd
+# from sklearn.model_selection import train_test_split
+# from sklearn.metrics import accuracy_score, r2_score
+# import sklearn
+# import tensorflow as tf
+# import tensorflow_datasets as tfds
+# import numpy as np
+# import Utils
 
-x, xt, y, yt, inputShape, outputShape = Utils.DBCollector(0, 0)
+# import tensorflow as tf; print(tf.__version__)
 
-# MPL MODEL TEST ======
+import keras; print("keras: {0}".format(keras.__version__))
 
-mlpModel = MlpModel(inputShape, outputShape)
-mlpModel.fit(x, y, validation_split=0.3, epochs=200, batch_size=min(200, x.size), shuffle=True)
+# x, xt, y, yt, inputShape, outputShape = Utils.DBCollector(0, 0)
 
-yp = mlpModel.predict(xt)
-yp = tf.one_hot(tf.argmax(yp, axis=1), depth = outputShape)
-# yt = tf.keras.utils.to_categorical(yt, num_classes = outputShape)
+# # MPL MODEL TEST ======
 
-r2 = r2_score(yt, yp)
-ac = accuracy_score(yt, yp)
+# mlpModel = MlpModel(inputShape, outputShape)
+# mlpModel.fit(x, y, validation_split=0.3, epochs=200, batch_size=min(200, x.size), shuffle=True)
 
-print(sklearn.metrics.classification_report(yt, yp))
-print("accuracy: {0}".format(ac))                                                                               
+# yp = mlpModel.predict(xt)
+# yp = tf.one_hot(tf.argmax(yp, axis=1), depth = outputShape)
+# # yt = tf.keras.utils.to_categorical(yt, num_classes = outputShape)
+
+# r2 = r2_score(yt, yp)
+# ac = accuracy_score(yt, yp)
+
+# print(sklearn.metrics.classification_report(yt, yp))
+# print("accuracy: {0}".format(ac))                                                                               
 
 # CONVOLUTIONAL MODEL TEST ======
 """
@@ -286,3 +290,12 @@ import tensorflow as tf
 # print(classification_report(y, yp.round()))
 # print("accuracy: {0}".format(ac))        
 # # print("f1: {0}".format(f1))        
+
+
+# NAME = "Test-TensorBoard-MLP"
+# tensorboard = TensorBoard(log_dir = "logs/{0}".format(NAME))
+
+# x, xt, y, yt, inputShape, outputShape = Utils.DBCollector(1, 0, test=True)
+
+# mlpModel = MlpModel(inputShape, outputShape)
+# mlpModel.fit(x, y, validation_split=0.3, epochs=10, batch_size=min(200, x.size), shuffle=True, callbacks=[tensorboard])

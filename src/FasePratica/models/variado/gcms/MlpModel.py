@@ -1,4 +1,7 @@
 import tensorflow as tf
+import Util as ut
+
+#OTIMIZAÇÃO SGD-4-128
 
 # MULTI-LAYER PERCEPTRON ==========
 class MlpModel(tf.keras.Model):
@@ -41,15 +44,23 @@ class MlpModel(tf.keras.Model):
   def __init__(self, inputShape, outputShape, **kwargs):
     super(MlpModel, self).__init__()
     self.inputs = tf.keras.layers.Dense(units=1024, input_dim=inputShape, activation=tf.nn.relu)
-    self.drop = tf.keras.layers.Dropout(0.2)
-    self.dense1 = tf.keras.layers.Dense(units=1024, activation=tf.nn.relu)
+    self.drop0 = tf.keras.layers.Dropout(0.2)
+    self.dense1 = tf.keras.layers.Dense(units=2048, activation=tf.nn.relu)
     self.drop1 = tf.keras.layers.Dropout(0.2)
-    self.outputs = tf.keras.layers.Dense(units=1, activation=tf.nn.sigmoid)
+    self.dense2 = tf.keras.layers.Dense(units=1024, activation=tf.nn.relu)
+    self.drop2 = tf.keras.layers.Dropout(0.2)
+    self.dense3 = tf.keras.layers.Dense(units=512, activation=tf.nn.relu)
+    self.drop3 = tf.keras.layers.Dropout(0.2)
+    self.dense4 = tf.keras.layers.Dense(units=256, activation=tf.nn.relu)
+    self.drop4 = tf.keras.layers.Dropout(0.2)
+    self.dense5 = tf.keras.layers.Dense(units=128, activation=tf.nn.relu)
+    self.drop5 = tf.keras.layers.Dropout(0.2)
+    self.outputs = tf.keras.layers.Dense(units=outputShape, activation=tf.nn.softmax)
     self.buildCompile(**kwargs)
     
   def call(self, inputs):
     x = self.inputs(inputs)
-    x = self.drop(x)
+    x = self.drop0(x)
     x = self.dense1(x)
     x = self.drop1(x)
     x = self.dense2(x)
@@ -63,8 +74,8 @@ class MlpModel(tf.keras.Model):
     return self.outputs(x)
 
   def buildCompile(self, **kwargs):
-    optimizer = kwargs.get('optimizer', tf.keras.optimizers.Adam(learning_rate=1e-4, epsilon=1e-8))
-    loss =  kwargs.get('loss',  "binary_crossentropy")
-    metrics = kwargs.get('metrics', ['accuracy'])
+    optimizer = kwargs.get('optimizer', tf.keras.optimizers.Adam(learning_rate=1e-5))
+    loss =  kwargs.get('loss',  "categorical_crossentropy")
+    metrics = kwargs.get('metrics', ['accuracy', tf.keras.metrics.Precision(), tf.keras.metrics.Recall(), ut.custom_f1])
     
     self.compile(optimizer, loss, metrics)

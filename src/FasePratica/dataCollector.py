@@ -86,7 +86,7 @@ def baseNormalization(base, datasetTrain, datasetTest):
             x = s1.fit_transform(x)
             xt = s1.transform(xt)
 
-            outputShape = 2
+            outputShape = 1
         case 1:
             labelsTrain = datasetTrain[0:1]
             datasetTrain = datasetTrain[1:]
@@ -119,7 +119,7 @@ def baseNormalization(base, datasetTrain, datasetTest):
 
             x, xt, y, yt = train_test_split(x, y, test_size=0.3, random_state=10)
 
-            outputShape = 2
+            outputShape = 1
     return x, xt, y, yt, outputShape
 
 def testNormalization(base):

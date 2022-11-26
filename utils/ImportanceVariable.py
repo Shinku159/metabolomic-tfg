@@ -6,7 +6,6 @@ import tensorflow as tf
 import pandas as pd
 import numpy as np
 import random
-import Utils
 
 x, xt, y, yt, inputShape, outputShape = Utils.DBCollector(0, 0)
 
@@ -22,7 +21,7 @@ importance = np.zeros(inputShape)
 
 print("ACC = {0}".format(acc))
 
-K = 1
+K = 50
 
 df = pd.DataFrame(x, columns = list(range(0, inputShape)))
 

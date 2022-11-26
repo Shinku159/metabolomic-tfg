@@ -1,0 +1,12 @@
+metric,value
+
+Accuracy, 0.5853
+
+Precision, 0.6012
+
+Recall, 0.9114
+
+F1_Score, 0.721
+
+Temp, 231.6367 seg
+
